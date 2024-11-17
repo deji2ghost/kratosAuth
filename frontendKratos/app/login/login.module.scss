@@ -1,0 +1,7 @@
+.Heading {
+   @apply flex flex-row bg-slate-50 min-h-screen;
+}
+
+.Heading2 {
+   @apply hidden lg:flex h-full relative;
+}

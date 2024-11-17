@@ -1,0 +1,26 @@
+version: '3.7'
+services:
+  kratos:
+    build: .
+    ports:
+      - "4433:4433"
+      - "4434:4434"
+    environment:
+      - DSN=postgres://user:password@db/kratos?sslmode=disable  # Example for using a database
+    volumes:
+      - ./kratos.yml:/app/kratos.yml
+      - ./identity.schema.json:/app/identity.schema.json
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: kratos
+    volumes:
+      - kratos_db_data:/var/lib/postgresql/data
+
+volumes:
+  kratos_db_data:

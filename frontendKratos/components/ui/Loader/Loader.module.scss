@@ -1,0 +1,7 @@
+.container {
+   @apply flex w-full items-center justify-center;
+}
+
+.svg {
+   @apply inline h-4 w-4 animate-spin text-inherit;
+}

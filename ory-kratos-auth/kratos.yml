@@ -1,0 +1,39 @@
+dsn: postgres://user:password@db/kratos?sslmode=disable
+
+selfservice:
+  default_browser_return_url: "http://localhost:3000"  # Redirect users to this URL after login
+  flows:
+    login:
+      ui_url: http://localhost:3000/login  # The URL where users can log in
+    registration:
+      ui_url: http://localhost:3000/registration  # The URL for registration if needed
+
+serve:
+  public:
+    base_url: http://localhost:4434  # Public Kratos API URL for client-side requests
+    port: 4434
+    cors:
+      enabled: true
+      allowed_origins:
+        - 'http://localhost:3000'  # Allow frontend from localhost:3000
+      allowed_methods:
+        - 'GET'
+        - 'POST'
+        - 'OPTIONS'
+        - 'PUT'  # Optional: Add PUT if needed
+        - 'DELETE'  # Optional: Add DELETE if needed
+      allowed_headers:
+        - 'Content-Type'
+        - 'Authorization'
+        - 'X-CSRF-Token'  # Include CSRF token header if needed
+      allow_credentials: true
+      max_age: 86400  # Cache preflight requests for 24 hours
+  admin:
+    base_url: http://localhost:4433  # Admin Kratos API URL for server-side management
+    port: 4433
+
+identity:
+  default_schema_id: default  # Default schema for identities
+  schemas:
+    - id: default
+      url: file:///app/identity.schema.json  # Path to your identity schema

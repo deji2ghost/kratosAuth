@@ -1,0 +1,23 @@
+.variant {
+   &__outline {
+      @apply border-darkolivegreen-100 text-darkolivegreen-100 border;
+   }
+
+   &__solid {
+      @apply text-white bg-darkolivegreen-100;
+   }
+
+   &__red {
+      @apply text-white bg-redolive-100;
+   }
+}
+
+.size {
+   &__small {
+      @apply px-4 py-2;
+   }
+
+   &__medium {
+      @apply px-12 py-2;
+   }
+}

@@ -1,0 +1,11 @@
+.Container {
+   @apply relative w-full;
+}
+
+.Input {
+   @apply text-xs px-2 outline-none rounded text-[#181818] border border-[#316541] h-[45px] w-full placeholder:text-[#181818] md:px-4 lg:h-[56px] lg:text-base;
+}
+
+.Btn {
+   @apply absolute right-3 top-1/2 transform -translate-y-1/2 text-[#181818] focus:outline-none;
+}
