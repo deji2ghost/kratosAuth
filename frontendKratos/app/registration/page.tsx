@@ -1,76 +1,102 @@
-// pages/register.js
-"use client"
-import { useState } from "react";
-import { Configuration, FrontendApi } from "@ory/client";
+"use client";
 
-const ory = new FrontendApi(
-  new Configuration({
-    basePath: process.env.NEXT_PUBLIC_ORY_SDK_URL,
-    baseOptions: {
-      withCredentials: true,
-    },
-  })
-);
+import { useEffect, useState } from "react";
+import { initRegistrationFlow, submitRegistration } from "../api/register";
+import { DataProps } from "./pageTypes";
 
-export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+const RegistrationPage: React.FC = () => {
+  const [flowId, setFlowId] = useState<string | null>(null);
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const handleSubmit = async (e) => {
+  useEffect(() => {
+    const registrationFlow = async () => {
+      try {
+        const data = await initRegistrationFlow();
+        setFlowId(data.id);
+        // Extract CSRF token from UI nodes
+        const csrfNode = data.ui?.nodes?.find(
+          (n: { attributes: { name: string; value?: string } }) => n.attributes.name === "csrf_token"
+        );
+        setCsrfToken(csrfNode?.attributes.value || "");
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setError(`Failed to initialize registration flow: ${error.message}`);
+        } else {
+          setError("Failed to initialize registration flow due to an unknown error.");
+        }
+      } finally {
+        setLoading(false); // End loading state
+      }
+    };
+
+    registrationFlow();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!flowId) {
+      setError("Registration flow is not properly initialized.");
+      return;
+    }
+
+    const registrationData: DataProps = {
+      csrf_token: csrfToken || "", // CSRF token is optional in some cases
+      traits: { email: formData.email },
+      password: formData.password,
+    };
+
     try {
-      // Step 1: Create a new registration flow
-      const { data: registrationFlow } = await ory.createBrowserRegistrationFlow();
-  
-      console.log("Registration Flow:", registrationFlow);
-  
-      // Step 2: Submit the registration data
-      const response = await ory.updateRegistrationFlow({
-        flow: registrationFlow.id, // Use the flow ID from the previous step
-        updateRegistrationFlowBody: {
-          method: "password", // Specify the registration method
-          traits: { email }, // User's email (trait in identity schema)
-          password, // User's password
-        },
-      });
-  
-      console.log("Registration Successful:", response.data);
-      alert("Registration successful! Please check your email for confirmation.");
-    } catch (error: any) {
-      console.error("Registration Error:", error.response?.data || error.message);
-      alert(error.response?.data?.error?.message || "An error occurred during registration.");
+      const result = await submitRegistration(flowId, registrationData);
+      alert("Registration successful! User ID: " + result.identity.id);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message || "Failed to register. Please try again.");
+      } else {
+        setError("An unknown error occurred. Please try again.");
+      }
     }
   };
-  
+
+  if (loading) {
+    return <p>Loading registration flow...</p>;
+  }
 
   return (
-    <div style={{ maxWidth: "500px", margin: "auto" }}>
+    <div>
       <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email:
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {flowId ? (
+        <form onSubmit={handleSubmit}>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
             required
           />
-        </label>
-        <br />
-        <label>
-          Password:
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
             required
           />
-        </label>
-        <br />
-        <button type="submit">Register</button>
-      </form>
-      {message && <p>{message}</p>}
+          <button type="submit">Register</button>
+        </form>
+      ) : (
+        <p>Error: Could not load the registration flow.</p>
+      )}
     </div>
   );
-}
+};
+
+export default RegistrationPage

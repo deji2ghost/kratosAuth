@@ -1,4 +1,4 @@
-dsn: postgres://user:password@db/kratos?sslmode=disable
+dsn: postgres://username:password@localhost:5432/kratos?sslmode=disable
 
 selfservice:
   default_browser_return_url: "http://localhost:3000"  # Redirect users to this URL after login
@@ -37,3 +37,6 @@ identity:
   schemas:
     - id: default
       url: file:///app/identity.schema.json  # Path to your identity schema
+
+log:
+  level: debug

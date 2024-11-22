@@ -1,45 +1,70 @@
-"use client"
-import { useState } from 'react';
+"use client";
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { submitLogin } from '../api/login';
 
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState(''); // email or username
   const [password, setPassword] = useState('');
+  const [flowId, setFlowId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Fetch the login flow from the server-side API
+    const fetchLoginFlow = async () => {
+      try {
+        const response = await fetch('/api/getLoginFlow'); // Calls the server-side API
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch login flow');
+        }
+
+        setFlowId(data.id); // Save flow ID for login
+        setIdentifier(data.email)
+        setPassword(data.password)
+      } catch (err) {
+        console.error('Error initializing login flow:', err);
+        setError('Failed to initialize login flow. Please try again.');
+      }
+    };
+
+    fetchLoginFlow();
+  }, []);
 
   // Handle login form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!flowId) {
+      setError('Login flow not initialized. Please refresh the page.');
+      return;
+    }
+
     try {
-      // Fetch the login flow ID from Kratos
-      const flowResponse = await fetch('http://localhost:4434/self-service/login/browser', {
-        credentials: 'include',
-      });
-      const flow = await flowResponse.json();
+      const baseUrl = process.env.NEXT_PUBLIC_KRATOS_BASE_URL;
 
-      // Submit the login request to Kratos
-      const loginResponse = await fetch(`http://localhost:4434/self-service/login?flow=${flow.id}`, {
-        method: 'POST',
-        credentials: 'include', // include credentials for session handling
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: 'password', // method can vary depending on your Kratos setup
-          password_identifier: identifier,
-          password: password,
-        }),
-      });
-
-      if (loginResponse.ok) {
-        router.push('/'); // Redirect on successful login
-      } else {
-        const errData = await loginResponse.json();
-        console.error('Login error:', errData);
+      if (!baseUrl) {
+        throw new Error('NEXT_PUBLIC_KRATOS_BASE_URL is not defined.');
       }
-    } catch (err) {
-      console.error('Error during login:', err);
+
+      // Use the submitLogin utility function
+      await submitLogin(baseUrl, flowId, identifier, password);
+
+      router.push('/'); // Redirect on successful login
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'An unexpected error occurred. Please try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     }
   };
+
+  if (error) {
+    return <p style={{ color: 'red' }}>{error}</p>;
+  }
 
   return (
     <div>
