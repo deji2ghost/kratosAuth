@@ -9,9 +9,9 @@ import Image from "next/image";
 const Home = () => {
 
   return (
-    <div>
+    <div className="w-full">
       <Header />
-      <div className='bg-[#FFFFFF] w-full md:w-[90%] mx-auto md:absolute mt-20 md:mt-0 md:flex md:justify-between text-[#2F2F2F] md:top-40'>
+      <div className='bg-[#FFFFFF] py-5 w-[600px] md:w-[90%] mx-auto md:mt-0 md:flex md:justify-between text-[#2F2F2F] md:top-[70px]'>
       <Image 
         src={imagePortfolio} 
         alt=""
